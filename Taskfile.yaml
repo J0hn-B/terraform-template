@@ -1,0 +1,26 @@
+---
+version: "3"
+
+
+env:
+  REPO:
+    sh: git rev-parse --show-toplevel
+
+
+tasks:
+  test:
+    - task: lint
+    - task: tfsec
+
+
+  lint:
+    desc: Run GitHub SuperLinter in Docker
+    cmds:
+      - docker run --rm -e DISABLE_ERRORS=true -e RUN_LOCAL=true -v $REPO:/tmp/lint ghcr.io/github/super-linter:slim-v4
+      - '{{if eq OS "windows"}}powershell Remove-Item "super-linter.log"{{else}}rm -f super-linter.log{{end}}'
+
+
+  tfsec:
+    desc: Static analysis of your terraform code to spot potential misconfigurations
+    cmds:
+      - docker run --rm -it -v "$REPO:/src" aquasec/tfsec --force-all-dirs /src
